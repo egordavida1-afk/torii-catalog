@@ -1,0 +1,80 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Anime {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  description   String?
+  posterUrl     String?
+  backgroundUrl String?
+  year          Int?
+  genres        String?
+  status        String   @default("ongoing") // ongoing | finished | announced
+  type          String   @default("series") // series | movie
+  videoUrl      String?  // используется для фильмов
+  createdAt     DateTime @default(now())
+  seasons       Season[]
+
+  @@index([createdAt])
+  @@index([type])
+}
+
+model Season {
+  id       String    @id @default(cuid())
+  number   Int
+  title    String?
+  animeId  String
+  anime    Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  episodes Episode[]
+
+  @@unique([animeId, number])
+}
+
+model Episode {
+  id          String    @id @default(cuid())
+  number      Int
+  title       String?
+  videoUrl    String
+  duration    Int?
+  releaseDate DateTime?
+  seasonId    String
+  season      Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, number])
+}
+
+model Genre {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
