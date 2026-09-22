@@ -1,43 +1,38 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
-import { typeLabel, statusLabel } from "@/lib/utils";
+import { categoryLabel, searchWhere, typeLabel } from "@/lib/utils";
 import { logoutUser } from "./auth/actions";
 
 export const dynamic = "force-dynamic";
 
 const fallbackPoster = "https://placehold.co/300x450/1c1a26/a9a3b5?text=Нет+постера";
 
-function contentWhere(q?: string, type?: string, genre?: string) {
-  const text = q?.trim();
+function contentWhere(q?: string, category?: string, genre?: string) {
   return {
-    ...(type === "movie" || type === "series" ? { type } : {}),
+    ...(category === "movie" || category === "series" || category === "anime" ? { category } : {}),
     ...(genre ? { genres: { contains: genre, mode: "insensitive" as const } } : {}),
-    ...(text ? {
-      OR: [
-        { title: { contains: text, mode: "insensitive" as const } },
-        { description: { contains: text, mode: "insensitive" as const } },
-      ],
-    } : {}),
+    ...searchWhere(q || ""),
   };
 }
 
-export default async function HomePage({ searchParams }: { searchParams: { q?: string; type?: string; genre?: string } }) {
+export default async function HomePage({ searchParams }: { searchParams: { q?: string; category?: string; genre?: string } }) {
   const q = searchParams.q?.trim() || "";
-  const type = searchParams.type === "movie" || searchParams.type === "series" ? searchParams.type : "";
+  const category = searchParams.category === "movie" || searchParams.category === "series" || searchParams.category === "anime" ? searchParams.category : "";
   const genre = searchParams.genre?.trim() || "";
   const user = await getCurrentUser();
 
-  const where = contentWhere(q, type, genre);
+  const where = contentWhere(q, category, genre);
   const [results, genres] = await Promise.all([
-    prisma.anime.findMany({ where, orderBy: { createdAt: "desc" }, take: 60, include: { seasons: { include: { episodes: true } } } }),
+    prisma.anime.findMany({ where, orderBy: { createdAt: "desc" }, take: 100, include: { seasons: { include: { episodes: true } } } }),
     prisma.genre.findMany({ orderBy: { name: "asc" } }),
   ]);
 
-  const hasFilters = Boolean(q || type || genre);
-  const newReleases = hasFilters ? [] : results.slice(0, 8);
-  const movies = hasFilters ? results.filter((a) => a.type === "movie") : results.filter((a) => a.type === "movie").slice(0, 8);
-  const series = hasFilters ? results.filter((a) => a.type === "series") : results.filter((a) => a.type === "series").slice(0, 8);
+  const hasFilters = Boolean(q || category || genre);
+  const newReleases = hasFilters ? [] : results.slice(0, 10);
+  const movies = results.filter((a) => a.category === "movie").slice(0, hasFilters ? 100 : 10);
+  const series = results.filter((a) => a.category === "series").slice(0, hasFilters ? 100 : 10);
+  const anime = results.filter((a) => a.category === "anime").slice(0, hasFilters ? 100 : 10);
 
   const genreSections = hasFilters ? [] : genres.map((g) => ({
     ...g,
@@ -49,21 +44,14 @@ export default async function HomePage({ searchParams }: { searchParams: { q?: s
       <div className="page-head catalog-head">
         <div>
           <h1>Каталог</h1>
-          <p>Фильмы и сериалы. Новинки, подборки по жанрам и поиск по каталогу.</p>
-        </div>
-        <div className="account-box">
-          {user ? (
-            <><span>{user.email}</span><form action={logoutUser}><button className="btn btn-secondary" type="submit">Выйти</button></form></>
-          ) : (
-            <><Link className="btn btn-secondary" href="/login">Войти</Link><Link className="btn" href="/register">Регистрация</Link></>
-          )}
+          <p>Фильмы, сериалы и аниме. Новинки, жанры и быстрый поиск по названию.</p>
         </div>
       </div>
 
-      <form className="search-panel" method="get">
-        <input name="q" value={q} placeholder="Поиск по названию..." aria-label="Поиск" />
-        <select name="type" defaultValue={type} aria-label="Тип">
-          <option value="">Все</option><option value="movie">Фильмы</option><option value="series">Сериалы</option>
+      <form className="search-panel" method="get" action="/">
+        <input name="q" defaultValue={q} placeholder="Поиск по названию..." aria-label="Поиск по названию" autoComplete="off" />
+        <select name="category" defaultValue={category} aria-label="Раздел">
+          <option value="">Все разделы</option><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option>
         </select>
         <select name="genre" defaultValue={genre} aria-label="Жанр">
           <option value="">Все жанры</option>
@@ -76,25 +64,27 @@ export default async function HomePage({ searchParams }: { searchParams: { q?: s
       {hasFilters ? (
         <section className="catalog-section">
           <div className="section-title"><h2>Результаты</h2><span>{results.length}</span></div>
-          {results.length ? <div className="grid">{results.map((a) => <Card key={a.id} item={a} />)}</div> : <div className="empty-state">По запросу ничего не найдено.</div>}
+          {results.length ? <div className="grid">{results.map((a) => <Card key={a.id} item={a} />)}</div> : <div className="empty-state">Ничего не найдено. Попробуй другое название или сбрось фильтры.</div>}
         </section>
       ) : (
         <>
           {newReleases.length > 0 && <CatalogSection title="Новинки" items={newReleases} />}
-          <CatalogSection title="Фильмы" items={movies} empty="Фильмов пока нет." />
-          <CatalogSection title="Сериалы" items={series} empty="Сериалов пока нет." />
+          <CatalogSection title="Фильмы" items={movies} empty="Фильмов пока нет." category="movie" />
+          <CatalogSection title="Сериалы" items={series} empty="Сериалов пока нет." category="series" />
+          <CatalogSection title="Аниме" items={anime} empty="Аниме пока нет." category="anime" />
           {genreSections.map((section) => <CatalogSection key={section.id} title={`Жанр: ${section.name}`} items={section.items} genre={section.name} />)}
-          {!newReleases.length && !movies.length && !series.length && <div className="empty-state">Каталог пока пуст. Добавь первый тайтл через <Link href="/admin">админку →</Link></div>}
+          {!newReleases.length && !movies.length && !series.length && !anime.length && <div className="empty-state">Каталог пока пуст. Добавь тайтл через админку или запусти автозагрузку TMDB.</div>}
         </>
       )}
     </>
   );
 }
 
-function CatalogSection({ title, items, empty = "В этом разделе пока нет тайтлов.", genre }: { title: string; items: any[]; empty?: string; genre?: string }) {
+function CatalogSection({ title, items, empty = "В этом разделе пока нет тайтлов.", genre, category }: { title: string; items: any[]; empty?: string; genre?: string; category?: string }) {
+  const href = genre ? `/?genre=${encodeURIComponent(genre)}` : category ? `/?category=${category}` : "/";
   return (
     <section className="catalog-section">
-      <div className="section-title"><h2>{title}</h2>{items.length > 0 && <Link href={genre ? `/?genre=${encodeURIComponent(genre)}` : `/?q=&type=${title === "Фильмы" ? "movie" : title === "Сериалы" ? "series" : ""}`}>Смотреть все →</Link>}</div>
+      <div className="section-title"><h2>{title}</h2>{items.length > 0 && <Link href={href}>Смотреть все →</Link>}</div>
       {items.length ? <div className="grid">{items.map((a) => <Card key={a.id} item={a} />)}</div> : <div className="empty-state">{empty}</div>}
     </section>
   );
@@ -102,15 +92,13 @@ function CatalogSection({ title, items, empty = "В этом разделе по
 
 function Card({ item }: { item: any }) {
   const episodes = item.seasons.reduce((n: number, s: any) => n + s.episodes.length, 0);
-  const accessText = "Только для зарегистрированных";
   return (
     <Link href={`/anime/${item.slug}`} className="card">
-      <span className="card-tag">{typeLabel(item.type)}</span>
-      <img className="card-poster" src={item.posterUrl || fallbackPoster} alt={item.title} />
+      <span className="card-tag">{categoryLabel(item.category)}</span>
+      <img className="card-poster" src={item.posterUrl || fallbackPoster} alt={item.title} loading="lazy" />
       <div className="card-body">
         <div className="card-title">{item.title}</div>
-        <div className="card-meta">{item.year ?? "—"} · {item.type === "movie" ? "Фильм" : `${episodes} ${episodes === 1 ? "серия" : "серий"}`}</div>
-        <div className="card-access">{accessText}</div>
+        <div className="card-meta">{item.year ?? "—"} · {typeLabel(item.type)}{item.type === "series" && episodes ? ` · ${episodes} ${episodes === 1 ? "серия" : "серий"}` : ""}</div>
       </div>
     </Link>
   );

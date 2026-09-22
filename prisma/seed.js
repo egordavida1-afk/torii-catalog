@@ -20,7 +20,7 @@ async function main() {
 
   await prisma.anime.upsert({
     where: { slug: "nochnoy-strazh" },
-    update: {},
+    update: { category: "series" },
     create: {
       slug: "nochnoy-strazh",
       title: "Ночной страж",
@@ -31,6 +31,7 @@ async function main() {
       genres: "Фэнтези,Боевик",
       status: "ongoing",
       type: "series",
+      category: "series",
       seasons: {
         create: [
           {
@@ -49,8 +50,36 @@ async function main() {
   });
 
   await prisma.anime.upsert({
+    where: { slug: "krasnyy-klinok-demo" },
+    update: { category: "anime" },
+    create: {
+      slug: "krasnyy-klinok-demo",
+      title: "Красный клинок",
+      description: "Демо-аниме для проверки отдельного раздела аниме.",
+      posterUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80",
+      backgroundUrl: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1800&q=85",
+      year: 2026,
+      genres: "Фэнтези,Приключения",
+      status: "ongoing",
+      type: "series",
+      category: "anime",
+      seasons: {
+        create: [
+          {
+            number: 1,
+            title: "Сезон 1",
+            episodes: {
+              create: [{ number: 1, title: "Проба клинка", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", duration: 23 }],
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.anime.upsert({
     where: { slug: "posledniy-reys-demo" },
-    update: {},
+    update: { category: "movie" },
     create: {
       slug: "posledniy-reys-demo",
       title: "Последний рейс",
@@ -61,8 +90,15 @@ async function main() {
       genres: "Триллер,Приключения",
       status: "finished",
       type: "movie",
+      category: "movie",
       videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     },
+  });
+
+  await prisma.siteSettings.upsert({
+    where: { id: "global" },
+    update: {},
+    create: { id: "global", defaultAccent: "#E8A33D", buttonTextColor: "#171208" },
   });
 
   console.log("Готово: базовые жанры и демо-данные добавлены.");
@@ -74,3 +110,4 @@ main()
     process.exit(1);
   })
   .finally(async () => prisma.$disconnect());
+

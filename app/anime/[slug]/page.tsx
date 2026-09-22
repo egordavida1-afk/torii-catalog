@@ -29,7 +29,7 @@ export default async function AnimePage({ params, searchParams }: { params: { sl
         <div className="title-hero">
           <img src={anime.posterUrl || "https://placehold.co/300x450/1c1a26/a9a3b5?text=Постер"} alt={anime.title} />
           <div>
-            <div className="eyebrow">{typeLabel(anime.type)} · просмотр открыт зарегистрированному пользователю</div>
+            <div className="eyebrow">{typeLabel(anime.type)}</div>
             <h1>{anime.title}</h1>
             <div className="title-meta">
               <span className="pill">{statusLabel(anime.status)}</span>

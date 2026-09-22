@@ -6,8 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin-auth";
 import { normalizeHttpUrl } from "@/lib/security";
 import { slugify } from "@/lib/utils";
+import { syncTmdbCatalog } from "@/lib/tmdb";
 
 const VALID_TYPES = new Set(["series", "movie"]);
+const VALID_CATEGORIES = new Set(["series", "movie", "anime"]);
 const VALID_STATUSES = new Set(["ongoing", "finished", "announced"]);
 
 function cleanText(value: FormDataEntryValue | null, max = 5000) {
@@ -41,7 +43,13 @@ export async function createAnime(formData: FormData) {
   if (!title) throw new Error("Название обязательно");
 
   const type = cleanText(formData.get("type"), 20);
-  if (!VALID_TYPES.has(type)) throw new Error("Некорректный тип контента");
+  if (!VALID_TYPES.has(type)) throw new Error("Некорректный формат контента");
+
+  const category = cleanText(formData.get("category"), 20);
+  if (!VALID_CATEGORIES.has(category)) throw new Error("Некорректный раздел каталога");
+  if ((category === "movie" && type !== "movie") || (category === "series" && type !== "series")) {
+    throw new Error("Для разделов «Фильмы» и «Сериалы» формат должен совпадать с разделом. Для «Аниме» доступен фильм или сериал.");
+  }
 
   const status = cleanText(formData.get("status"), 20);
   if (!VALID_STATUSES.has(status)) throw new Error("Некорректный статус");
@@ -49,9 +57,8 @@ export async function createAnime(formData: FormData) {
   const posterUrl = normalizeHttpUrl(cleanText(formData.get("posterUrl"), 2048));
   const backgroundUrl = normalizeHttpUrl(cleanText(formData.get("backgroundUrl"), 2048));
   const videoUrl = type === "movie" ? normalizeHttpUrl(cleanText(formData.get("videoUrl"), 2048)) : null;
-  if (type === "movie" && !videoUrl) throw new Error("Для фильма нужна ссылка на видео");
 
-  const yearRaw = cleanNumber(formData.get("year"), 1900, 2200);
+  const year = cleanNumber(formData.get("year"), 1900, 2200);
   const genres = await selectedGenres(formData);
   const anime = await prisma.anime.create({
     data: {
@@ -60,10 +67,12 @@ export async function createAnime(formData: FormData) {
       description: cleanText(formData.get("description"), 5000) || null,
       posterUrl,
       backgroundUrl,
-      year: yearRaw,
+      year,
       genres,
       status,
       type,
+      category,
+      source: "manual",
       videoUrl,
     },
   });
@@ -80,14 +89,18 @@ export async function updateAnime(animeId: string, formData: FormData) {
   const title = cleanText(formData.get("title"), 120);
   if (!title) throw new Error("Название обязательно");
   const type = cleanText(formData.get("type"), 20);
-  if (!VALID_TYPES.has(type)) throw new Error("Некорректный тип контента");
+  if (!VALID_TYPES.has(type)) throw new Error("Некорректный формат контента");
+  const category = cleanText(formData.get("category"), 20);
+  if (!VALID_CATEGORIES.has(category)) throw new Error("Некорректный раздел каталога");
+  if ((category === "movie" && type !== "movie") || (category === "series" && type !== "series")) {
+    throw new Error("Для разделов «Фильмы» и «Сериалы» формат должен совпадать с разделом. Для «Аниме» доступен фильм или сериал.");
+  }
   const status = cleanText(formData.get("status"), 20);
   if (!VALID_STATUSES.has(status)) throw new Error("Некорректный статус");
 
   const posterUrl = normalizeHttpUrl(cleanText(formData.get("posterUrl"), 2048));
   const backgroundUrl = normalizeHttpUrl(cleanText(formData.get("backgroundUrl"), 2048));
   const videoUrl = type === "movie" ? normalizeHttpUrl(cleanText(formData.get("videoUrl"), 2048)) : null;
-  if (type === "movie" && !videoUrl) throw new Error("Для фильма нужна ссылка на видео");
   if (type === "movie" && existing.type === "series") {
     const seasonCount = await prisma.season.count({ where: { animeId } });
     if (seasonCount > 0) throw new Error("Сначала удали сезоны сериала, затем переводи тайтл в фильм.");
@@ -106,6 +119,8 @@ export async function updateAnime(animeId: string, formData: FormData) {
       genres,
       status,
       type,
+      category,
+      source: existing.source === "tmdb" ? "manual" : existing.source,
       videoUrl,
     },
   });
@@ -203,4 +218,40 @@ export async function deleteGenre(id: string) {
   await prisma.genre.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/admin");
+}
+
+function cleanHex(value: FormDataEntryValue | null, fallback: string) {
+  const raw = String(value || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw.toUpperCase() : fallback;
+}
+
+export async function updateSiteSettings(formData: FormData) {
+  await requireAdminAction();
+  const existing = await prisma.siteSettings.findUnique({ where: { id: "global" } });
+  const backgroundUrl = normalizeHttpUrl(cleanText(formData.get("backgroundUrl"), 2048));
+  const defaultAccent = cleanHex(formData.get("defaultAccent"), existing?.defaultAccent || "#E8A33D");
+  const buttonTextColor = cleanHex(formData.get("buttonTextColor"), existing?.buttonTextColor || "#171208");
+
+  await prisma.siteSettings.upsert({
+    where: { id: "global" },
+    update: { backgroundUrl, defaultAccent, buttonTextColor },
+    create: { id: "global", backgroundUrl, defaultAccent, buttonTextColor },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  redirect("/admin?settings=1");
+}
+
+export async function syncCatalogNow() {
+  await requireAdminAction();
+
+  let result: Awaited<ReturnType<typeof syncTmdbCatalog>>;
+  try {
+    result = await syncTmdbCatalog();
+  } catch {
+    redirect("/admin?syncError=1");
+  }
+
+  redirect(`/admin?sync=${result.imported}&updated=${result.updated}&anime=${result.anime}&movies=${result.movies}&series=${result.series}`);
 }

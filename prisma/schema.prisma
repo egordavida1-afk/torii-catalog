@@ -18,13 +18,19 @@ model Anime {
   year          Int?
   genres        String?
   status        String   @default("ongoing") // ongoing | finished | announced
-  type          String   @default("series") // series | movie
+  type          String   @default("series") // series | movie — формат плеера
+  category      String   @default("series") // movie | series | anime — раздел каталога
+  source        String   @default("manual") // manual | tmdb
+  sourceKey     String?  @unique
   videoUrl      String?  // используется для фильмов
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   seasons       Season[]
 
   @@index([createdAt])
+  @@index([updatedAt])
   @@index([type])
+  @@index([category])
 }
 
 model Season {
@@ -39,14 +45,14 @@ model Season {
 }
 
 model Episode {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   number      Int
   title       String?
   videoUrl    String
   duration    Int?
   releaseDate DateTime?
   seasonId    String
-  season      Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  season      Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([seasonId, number])
 }
@@ -77,4 +83,13 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model SiteSettings {
+  id              String   @id @default("global")
+  backgroundUrl   String?
+  defaultAccent  String   @default("#E8A33D")
+  buttonTextColor String   @default("#171208")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

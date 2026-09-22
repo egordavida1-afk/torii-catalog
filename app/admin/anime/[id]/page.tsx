@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createSeason, createEpisode, deleteAnime, deleteSeason, deleteEpisode, updateAnime } from "../../actions";
 import ConfirmButton from "../../ConfirmButton";
-import { typeLabel } from "@/lib/utils";
+import { categoryLabel, typeLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,7 @@ export default async function AdminAnimePage({ params }: { params: { id: string 
   return (
     <>
       <div className="page-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20 }}>
-        <div><h1>{anime.title}</h1><p>{typeLabel(anime.type)} · <Link href={`/anime/${anime.slug}`} style={{ color: "var(--gold)" }}>открыть страницу →</Link></p></div>
+        <div><h1>{anime.title}</h1><p>{categoryLabel(anime.category)} · {typeLabel(anime.type)} · <Link href={`/anime/${anime.slug}`} style={{ color: "var(--gold)" }}>открыть страницу →</Link></p></div>
         <form action={deleteAnime.bind(null, anime.id)}><ConfirmButton message={`Удалить «${anime.title}» вместе со всеми сезонами и сериями?`}>Удалить тайтл</ConfirmButton></form>
       </div>
 
@@ -34,10 +34,10 @@ export default async function AdminAnimePage({ params }: { params: { id: string 
         <div>
           <form action={updateAnime.bind(null, anime.id)} className="panel">
             <h2>Основные данные</h2>
-            <div className="field-row"><div className="field"><label>Название</label><input name="title" defaultValue={anime.title} required maxLength={120} /></div><div className="field"><label>Тип</label><select name="type" defaultValue={anime.type}><option value="series">Сериал</option><option value="movie">Фильм</option></select></div></div>
+            <div className="field-row"><div className="field"><label>Название</label><input name="title" defaultValue={anime.title} required maxLength={120} /></div><div className="field"><label>Раздел</label><select name="category" defaultValue={anime.category}><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option></select></div></div><div className="field-row"><div className="field"><label>Формат</label><select name="type" defaultValue={anime.type}><option value="series">Сериал</option><option value="movie">Фильм</option></select></div><div className="field"><label>Год</label><input name="year" type="number" min={1900} max={2200} defaultValue={anime.year || ""} /></div></div>
             <div className="field"><label>Описание</label><textarea name="description" rows={4} maxLength={5000} defaultValue={anime.description || ""} /></div>
             <div className="field-row"><div className="field"><label>Постер (URL)</label><input name="posterUrl" defaultValue={anime.posterUrl || ""} maxLength={2048} /></div><div className="field"><label>Фон страницы тайтла (URL)</label><input name="backgroundUrl" defaultValue={anime.backgroundUrl || ""} maxLength={2048} /></div></div>
-            <div className="field-row"><div className="field"><label>Год</label><input name="year" type="number" min={1900} max={2200} defaultValue={anime.year || ""} /></div><div className="field"><label>Статус</label><select name="status" defaultValue={anime.status}><option value="ongoing">Онгоинг</option><option value="finished">Завершён</option><option value="announced">Анонс</option></select></div></div>
+            <div className="field-row"><div className="field"><label>Статус</label><select name="status" defaultValue={anime.status}><option value="ongoing">Онгоинг</option><option value="finished">Завершён</option><option value="announced">Анонс</option></select></div></div>
             <div className="field"><label>Жанры</label><div className="check-grid">{genres.map((g) => <label className="check" key={g.id}><input type="checkbox" name="genres" value={g.name} defaultChecked={selected.has(g.name.toLowerCase())} /> <span>{g.name}</span></label>)}</div></div>
             <div className="field"><label>Видео фильма (у сериала не используется)</label><input name="videoUrl" defaultValue={anime.videoUrl || ""} maxLength={2048} placeholder="https://..." /></div>
             <button className="btn" type="submit">Сохранить изменения</button>

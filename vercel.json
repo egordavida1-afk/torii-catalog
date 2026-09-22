@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/tmdb-sync",
+      "schedule": "15 6 * * *"
+    }
+  ]
+}
