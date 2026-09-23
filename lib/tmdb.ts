@@ -10,6 +10,8 @@ type TmdbItem = {
   id: number;
   title?: string;
   name?: string;
+  original_title?: string;
+  original_name?: string;
   overview?: string;
   poster_path?: string | null;
   backdrop_path?: string | null;
@@ -126,12 +128,15 @@ async function importItems(
       .slice(0, 8)
       .join(",");
 
+    const year = yearFrom(mediaType === "movie" ? item.release_date : item.first_air_date);
+    const originalTitle = cleanOverview(mediaType === "movie" ? item.original_title : item.original_name)?.slice(0, 120) || null;
     const data = {
       title: title.slice(0, 120),
+      originalTitle,
       description: cleanOverview(item.overview),
       posterUrl: normalizeImportedUrl(imageUrl(item.poster_path, "w500")),
       backgroundUrl: normalizeImportedUrl(imageUrl(item.backdrop_path, "original")),
-      year: yearFrom(mediaType === "movie" ? item.release_date : item.first_air_date),
+      year,
       genres: genres || null,
       status: "ongoing",
       type: mediaType === "movie" ? "movie" : "series",
@@ -141,12 +146,44 @@ async function importItems(
       videoUrl: null,
     } as const;
 
-    const existing = await prisma.anime.findUnique({ where: { sourceKey } });
+    let existing = await prisma.anime.findUnique({ where: { sourceKey } });
+    if (!existing && year && originalTitle) {
+      existing = await prisma.anime.findFirst({
+        where: {
+          year,
+          originalTitle: { equals: originalTitle, mode: "insensitive" },
+        },
+      });
+    }
+    if (!existing && year) {
+      existing = await prisma.anime.findFirst({
+        where: {
+          year,
+          title: { equals: title, mode: "insensitive" },
+        },
+      });
+    }
+
     if (existing) {
-      if (existing.source === "tmdb") {
-        await prisma.anime.update({ where: { id: existing.id }, data });
-        updated += 1;
-      }
+      if (existing.source === "manual") continue;
+      const hasKodik = existing.source === "kodik" || existing.source === "tmdb+kodik";
+      const nextSource = existing.source === "manual" ? "manual" : hasKodik ? "tmdb+kodik" : "tmdb";
+      await prisma.anime.update({
+        where: { id: existing.id },
+        data: {
+          ...data,
+          title: hasKodik ? existing.title : data.title,
+          originalTitle: hasKodik ? (existing.originalTitle || data.originalTitle) : data.originalTitle,
+          source: nextSource,
+          sourceKey: existing.sourceKey || sourceKey,
+          videoUrl: existing.videoUrl,
+          posterUrl: existing.posterUrl || data.posterUrl,
+          backgroundUrl: existing.backgroundUrl || data.backgroundUrl,
+          description: existing.description || data.description,
+          genres: existing.genres || data.genres,
+        },
+      });
+      updated += 1;
     } else {
       await prisma.anime.create({
         data: {

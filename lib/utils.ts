@@ -41,6 +41,12 @@ export function searchWhere(input: string) {
 export function normalizeVideoUrl(url: string): { type: "iframe" | "video"; src: string } {
   const yt = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/embed\/)([\w-]+)/);
   if (yt) return { type: "iframe", src: `https://www.youtube.com/embed/${yt[1]}` };
+  try {
+    const parsed = new URL(url);
+    if (/^([a-z0-9-]+\.)?kodik(?:player)?\.(info|online|biz|cc|com)$/i.test(parsed.hostname)) return { type: "iframe", src: parsed.toString() };
+  } catch {
+    // keep the original URL for the native video fallback
+  }
   return { type: "video", src: url };
 }
 

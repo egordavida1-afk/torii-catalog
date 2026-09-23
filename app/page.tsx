@@ -1,105 +1,55 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/user-auth";
-import { categoryLabel, searchWhere, typeLabel } from "@/lib/utils";
-import { logoutUser } from "./auth/actions";
 
 export const dynamic = "force-dynamic";
 
-const fallbackPoster = "https://placehold.co/300x450/1c1a26/a9a3b5?text=Нет+постера";
+type Choice = {
+  href: string;
+  icon: string;
+  title: string;
+  subtitle: string;
+  className: string;
+};
 
-function contentWhere(q?: string, category?: string, genre?: string) {
-  return {
-    ...(category === "movie" || category === "series" || category === "anime" ? { category } : {}),
-    ...(genre ? { genres: { contains: genre, mode: "insensitive" as const } } : {}),
-    ...searchWhere(q || ""),
-  };
-}
+const choices: Choice[] = [
+  { href: "/catalog?category=movie", icon: "✦", title: "Фильмы", subtitle: "Большие истории на один вечер", className: "welcome-choice-movie" },
+  { href: "/catalog?category=series", icon: "◈", title: "Сериалы", subtitle: "Сезоны, серии и новые выпуски", className: "welcome-choice-series" },
+  { href: "/catalog?category=anime", icon: "鳥", title: "Аниме", subtitle: "Анимация, японские истории и новинки", className: "welcome-choice-anime" },
+];
 
-export default async function HomePage({ searchParams }: { searchParams: { q?: string; category?: string; genre?: string } }) {
-  const q = searchParams.q?.trim() || "";
-  const category = searchParams.category === "movie" || searchParams.category === "series" || searchParams.category === "anime" ? searchParams.category : "";
-  const genre = searchParams.genre?.trim() || "";
-  const user = await getCurrentUser();
-
-  const where = contentWhere(q, category, genre);
-  const [results, genres] = await Promise.all([
-    prisma.anime.findMany({ where, orderBy: { createdAt: "desc" }, take: 100, include: { seasons: { include: { episodes: true } } } }),
-    prisma.genre.findMany({ orderBy: { name: "asc" } }),
-  ]);
-
-  const hasFilters = Boolean(q || category || genre);
-  const newReleases = hasFilters ? [] : results.slice(0, 10);
-  const movies = results.filter((a) => a.category === "movie").slice(0, hasFilters ? 100 : 10);
-  const series = results.filter((a) => a.category === "series").slice(0, hasFilters ? 100 : 10);
-  const anime = results.filter((a) => a.category === "anime").slice(0, hasFilters ? 100 : 10);
-
-  const genreSections = hasFilters ? [] : genres.map((g) => ({
-    ...g,
-    items: results.filter((a) => a.genres?.split(",").map((x) => x.trim().toLowerCase()).includes(g.name.toLowerCase())).slice(0, 6),
-  })).filter((g) => g.items.length);
-
+export default function HomePage() {
   return (
-    <>
-      <div className="page-head catalog-head">
-        <div>
-          <h1>Каталог</h1>
-          <p>Фильмы, сериалы и аниме. Новинки, жанры и быстрый поиск по названию.</p>
+    <section className="welcome-page" aria-labelledby="welcome-title">
+      <div className="welcome-orbit welcome-orbit-one" aria-hidden="true" />
+      <div className="welcome-orbit welcome-orbit-two" aria-hidden="true" />
+      <div className="welcome-spark welcome-spark-one" aria-hidden="true" />
+      <div className="welcome-spark welcome-spark-two" aria-hidden="true" />
+
+      <div className="welcome-content">
+        <div className="welcome-kicker">Добро пожаловать в Тории</div>
+        <h1 id="welcome-title">Что бы вы хотели<br /><span>посмотреть?</span></h1>
+        <p className="welcome-lead">Выберите направление — и мы откроем каталог с новинками, жанрами и доступным просмотром.</p>
+
+        <div className="welcome-choices">
+          {choices.map((choice, index) => (
+            <Link
+              key={choice.href}
+              href={choice.href}
+              className={`welcome-choice ${choice.className}`}
+              style={{ "--welcome-delay": `${index * 110}ms` } as React.CSSProperties}
+            >
+              <span className="welcome-choice-glow" aria-hidden="true" />
+              <span className="welcome-choice-icon" aria-hidden="true">{choice.icon}</span>
+              <span className="welcome-choice-copy">
+                <span className="welcome-choice-title">{choice.title}</span>
+                <span className="welcome-choice-subtitle">{choice.subtitle}</span>
+              </span>
+              <span className="welcome-choice-arrow" aria-hidden="true">→</span>
+            </Link>
+          ))}
         </div>
+
+        <Link className="welcome-all" href="/catalog">Открыть весь каталог <span>→</span></Link>
       </div>
-
-      <form className="search-panel" method="get" action="/">
-        <input name="q" defaultValue={q} placeholder="Поиск по названию..." aria-label="Поиск по названию" autoComplete="off" />
-        <select name="category" defaultValue={category} aria-label="Раздел">
-          <option value="">Все разделы</option><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option>
-        </select>
-        <select name="genre" defaultValue={genre} aria-label="Жанр">
-          <option value="">Все жанры</option>
-          {genres.map((g) => <option key={g.id} value={g.name}>{g.name}</option>)}
-        </select>
-        <button className="btn" type="submit">Найти</button>
-        {hasFilters && <Link className="btn btn-secondary" href="/">Сбросить</Link>}
-      </form>
-
-      {hasFilters ? (
-        <section className="catalog-section">
-          <div className="section-title"><h2>Результаты</h2><span>{results.length}</span></div>
-          {results.length ? <div className="grid">{results.map((a) => <Card key={a.id} item={a} />)}</div> : <div className="empty-state">Ничего не найдено. Попробуй другое название или сбрось фильтры.</div>}
-        </section>
-      ) : (
-        <>
-          {newReleases.length > 0 && <CatalogSection title="Новинки" items={newReleases} />}
-          <CatalogSection title="Фильмы" items={movies} empty="Фильмов пока нет." category="movie" />
-          <CatalogSection title="Сериалы" items={series} empty="Сериалов пока нет." category="series" />
-          <CatalogSection title="Аниме" items={anime} empty="Аниме пока нет." category="anime" />
-          {genreSections.map((section) => <CatalogSection key={section.id} title={`Жанр: ${section.name}`} items={section.items} genre={section.name} />)}
-          {!newReleases.length && !movies.length && !series.length && !anime.length && <div className="empty-state">Каталог пока пуст. Добавь тайтл через админку или запусти автозагрузку TMDB.</div>}
-        </>
-      )}
-    </>
-  );
-}
-
-function CatalogSection({ title, items, empty = "В этом разделе пока нет тайтлов.", genre, category }: { title: string; items: any[]; empty?: string; genre?: string; category?: string }) {
-  const href = genre ? `/?genre=${encodeURIComponent(genre)}` : category ? `/?category=${category}` : "/";
-  return (
-    <section className="catalog-section">
-      <div className="section-title"><h2>{title}</h2>{items.length > 0 && <Link href={href}>Смотреть все →</Link>}</div>
-      {items.length ? <div className="grid">{items.map((a) => <Card key={a.id} item={a} />)}</div> : <div className="empty-state">{empty}</div>}
     </section>
-  );
-}
-
-function Card({ item }: { item: any }) {
-  const episodes = item.seasons.reduce((n: number, s: any) => n + s.episodes.length, 0);
-  return (
-    <Link href={`/anime/${item.slug}`} className="card">
-      <span className="card-tag">{categoryLabel(item.category)}</span>
-      <img className="card-poster" src={item.posterUrl || fallbackPoster} alt={item.title} loading="lazy" />
-      <div className="card-body">
-        <div className="card-title">{item.title}</div>
-        <div className="card-meta">{item.year ?? "—"} · {typeLabel(item.type)}{item.type === "series" && episodes ? ` · ${episodes} ${episodes === 1 ? "серия" : "серий"}` : ""}</div>
-      </div>
-    </Link>
   );
 }

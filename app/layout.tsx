@@ -32,9 +32,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <header className="site-header">
             <Link href="/" className="brand"><span className="brand-mark">鳥</span><span className="brand-name">Тории</span></Link>
             <nav className="site-nav" aria-label="Навигация">
-              <Link href="/">Каталог</Link>
+              <Link href="/catalog">Каталог</Link>
               {user ? (
-                <form action={logoutUser} className="nav-form"><button className="nav-link-button" type="submit">Выйти</button></form>
+                <>
+                  <Link href="/favorites">Избранное</Link>
+                  <form action={logoutUser} className="nav-form"><button className="nav-link-button" type="submit">Выйти</button></form>
+                </>
               ) : <Link href="/login">Войти</Link>}
             </nav>
           </header>

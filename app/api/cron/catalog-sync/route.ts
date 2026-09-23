@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { syncTmdbCatalog } from "@/lib/tmdb";
+import { syncCatalog } from "@/lib/catalog-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await syncTmdbCatalog();
+    const result = await syncCatalog();
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown sync error";

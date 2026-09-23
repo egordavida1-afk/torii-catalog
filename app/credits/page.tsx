@@ -12,7 +12,7 @@ export default function CreditsPage() {
         <p className="title-desc">Этот продукт использует TMDB API, но не одобрен и не сертифицирован TMDB.</p>
         <p className="title-desc"><a className="tmdb-credit" href="https://www.themoviedb.org" target="_blank" rel="noreferrer">The Movie Database (TMDB)</a></p>
       </div>
-      <p className="auth-note"><Link href="/">← В каталог</Link></p>
+      <p className="auth-note"><Link href="/catalog">← В каталог</Link></p>
     </div>
   );
 }
