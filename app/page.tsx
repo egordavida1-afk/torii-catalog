@@ -8,6 +8,19 @@ export const dynamic = "force-dynamic";
 
 const fallbackPoster = "https://placehold.co/600x900/10121c/9ea4b8?text=TORII";
 
+// Unicode-escaped UI labels keep Cyrillic strings intact through all build/deploy steps.
+const RAIL_TITLES = {
+  latest: "\u041d\u043e\u0432\u0438\u043d\u043a\u0438",
+  popular: "\u041f\u043e\u043f\u0443\u043b\u044f\u0440\u043d\u043e\u0435",
+  continueWatching: "\u041f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u0442\u044c \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440",
+  myList: "\u041c\u043e\u0439 \u0441\u043f\u0438\u0441\u043e\u043a",
+  movies: "\u0424\u0438\u043b\u044c\u043c\u044b",
+  series: "\u0421\u0435\u0440\u0438\u0430\u043b\u044b",
+  anime: "\u0410\u043d\u0438\u043c\u0435",
+  cartoons: "\u041c\u0443\u043b\u044c\u0442\u0444\u0438\u043b\u044c\u043c\u044b",
+  all: "\u0412\u0441\u0435",
+} as const;
+
 type CatalogItem = {
   id: string;
   slug: string;
@@ -91,21 +104,21 @@ export default async function HomePage() {
       ) : (
         <section className="home-empty">
           <div className="hero-eyebrow"><span className="hero-dot" /> TORII</div>
-          <h1>РўРІРѕСЏ РјРµРґРёР°С‚РµРєР°<br />РІ РѕРґРЅРѕРј РјРµСЃС‚Рµ.</h1>
-          <p>Р”РѕР±Р°РІСЊ С‚Р°Р№С‚Р»С‹ С‡РµСЂРµР· Р°РґРјРёРЅРєСѓ вЂ” РѕРЅРё РїРѕСЏРІСЏС‚СЃСЏ Р·РґРµСЃСЊ РєСЂР°СЃРёРІС‹РјРё РїРѕРґР±РѕСЂРєР°РјРё.</p>
-          <Link href="/catalog" className="hero-button">РћС‚РєСЂС‹С‚СЊ РєР°С‚Р°Р»РѕРі</Link>
+          <h1>Твоя медиатека<br />в одном месте.</h1>
+          <p>Добавь тайтлы через админку — они появятся здесь красивыми подборками.</p>
+          <Link href="/catalog" className="hero-button">Открыть каталог</Link>
         </section>
       )}
 
       <div className="home-sections">
-        <CatalogRail title="РќРѕРІРёРЅРєРё" href="/catalog" items={latest as CatalogItem[]} />
-        <CatalogRail title="РџРѕРїСѓР»СЏСЂРЅРѕРµ" href="/catalog" items={popular as CatalogItem[]} />
-        {continueWatching.length > 0 && <CatalogRail title="РџСЂРѕРґРѕР»Р¶РёС‚СЊ РїСЂРѕСЃРјРѕС‚СЂ" href="/catalog" items={continueWatching} showProgress />}
-        {favorites.length > 0 && <CatalogRail title="РњРѕР№ СЃРїРёСЃРѕРє" href="/favorites" items={favorites} />}
-        <CatalogRail title="Р¤РёР»СЊРјС‹" href="/catalog?category=movie" items={movies as CatalogItem[]} />
-        <CatalogRail title="РЎРµСЂРёР°Р»С‹" href="/catalog?category=series" items={series as CatalogItem[]} />
-        <CatalogRail title="РђРЅРёРјРµ" href="/catalog?category=anime" items={anime as CatalogItem[]} />
-        <CatalogRail title="РњСѓР»СЊС‚С„РёР»СЊРјС‹" href="/catalog?category=cartoon" items={cartoons as CatalogItem[]} />
+        <CatalogRail title={RAIL_TITLES.latest} href="/catalog" items={latest as CatalogItem[]} />
+        <CatalogRail title={RAIL_TITLES.popular} href="/catalog" items={popular as CatalogItem[]} />
+        {continueWatching.length > 0 && <CatalogRail title={RAIL_TITLES.continueWatching} href="/catalog" items={continueWatching} showProgress />}
+        {favorites.length > 0 && <CatalogRail title={RAIL_TITLES.myList} href="/favorites" items={favorites} />}
+        <CatalogRail title={RAIL_TITLES.movies} href="/catalog?category=movie" items={movies as CatalogItem[]} />
+        <CatalogRail title={RAIL_TITLES.series} href="/catalog?category=series" items={series as CatalogItem[]} />
+        <CatalogRail title={RAIL_TITLES.anime} href="/catalog?category=anime" items={anime as CatalogItem[]} />
+        <CatalogRail title={RAIL_TITLES.cartoons} href="/catalog?category=cartoon" items={cartoons as CatalogItem[]} />
       </div>
     </div>
   );
@@ -117,7 +130,7 @@ function CatalogRail({ title, href, items, showProgress = false }: { title: stri
     <section className="home-rail">
       <div className="rail-head">
         <h2>{title}</h2>
-        <Link href={href}>Р’СЃРµ <span>в†’</span></Link>
+        <Link href={href}>{RAIL_TITLES.all} <span>→</span></Link>
       </div>
       <div className="rail-track">
         {items.map((item) => <HomeCard key={item.id} item={item} showProgress={showProgress} />)}
@@ -140,24 +153,24 @@ function HomeCard({ item, showProgress = false }: { item: CatalogItem; showProgr
         <img src={item.posterUrl || fallbackPoster} alt={item.title} loading="lazy" />
         <span className="home-card-overlay" aria-hidden="true" />
         <span className="home-card-tag">{categoryLabel(item.category)}</span>
-        <span className="home-card-play" aria-hidden="true">в–¶</span>
+        <span className="home-card-play" aria-hidden="true">▶</span>
       </div>
       <div className="home-card-title">{item.title}</div>
       <div className="home-card-meta">
         {item.progress ? (
           <>
-            {item.progress.seasonNumber > 0 && <><span>РЎРµР·РѕРЅ {item.progress.seasonNumber}</span><span>В·</span></>}
-            <span>РЎРµСЂРёСЏ {item.progress.episodeNumber}</span>
+            {item.progress.seasonNumber > 0 && <><span>Сезон {item.progress.seasonNumber}</span><span>·</span></>}
+            <span>Серия {item.progress.episodeNumber}</span>
           </>
         ) : (
           <>
-            <span>{item.year ?? "вЂ”"}</span><span>В·</span><span>{typeLabel(item.type)}</span>
-            {episodes > 0 && <><span>В·</span><span>{episodes} СЃРµСЂРёР№</span></>}
+            <span>{item.year ?? "—"}</span><span>·</span><span>{typeLabel(item.type)}</span>
+            {episodes > 0 && <><span>·</span><span>{episodes} серий</span></>}
           </>
         )}
       </div>
       {showProgress && item.progress?.durationSeconds ? (
-        <div className="home-progress" aria-label={`РџСЂРѕСЃРјРѕС‚СЂРµРЅРѕ ${progressPercent}%`}>
+        <div className="home-progress" aria-label={`Просмотрено ${progressPercent}%`}>
           <span style={{ width: `${progressPercent}%` }} />
         </div>
       ) : null}
