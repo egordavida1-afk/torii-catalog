@@ -423,14 +423,19 @@ async function fetchAllPages(types: string, maxPages: number) {
   let nextPage: string | null = null;
   let page = 0;
   do {
-    const response = await kodikPost<KodikResponse>(nextPage || "/list", nextPage ? {} : {
-      limit: 100,
-      types,
-      sort: "updated_at",
-      order: "desc",
-      with_material_data: true,
-      with_episodes_data: true,
-    });
+    const response: KodikResponse = await kodikPost<KodikResponse>(
+      nextPage || "/list",
+      nextPage
+        ? {}
+        : {
+            limit: 100,
+            types,
+            sort: "updated_at",
+            order: "desc",
+            with_material_data: true,
+            with_episodes_data: true,
+          }
+    );
     results.push(...(response.results || []));
     nextPage = response.next_page || null;
     page += 1;
