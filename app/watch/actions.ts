@@ -72,6 +72,16 @@ export async function markEpisodeStarted(animeId: string, seasonNumber: number, 
   return saveWatchProgress({ animeId, seasonNumber, episodeNumber, positionSeconds: 0, completed: false });
 }
 
-export async function markEpisodeWatched(animeId: string, seasonNumber: number, episodeNumber: number) {
-  return saveWatchProgress({ animeId, seasonNumber, episodeNumber, positionSeconds: 0, completed: true });
+export async function markEpisodeWatched(
+  animeId: string,
+  seasonNumber: number,
+  episodeNumber: number
+): Promise<void> {
+  await saveWatchProgress({
+    animeId,
+    seasonNumber,
+    episodeNumber,
+    positionSeconds: 0,
+    completed: true,
+  });
 }
