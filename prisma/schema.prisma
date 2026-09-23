@@ -32,7 +32,10 @@ model Anime {
   updatedAt      DateTime       @updatedAt
   seasons        Season[]
   kodikSources   KodikSource[]
+<<<<<<< HEAD
   favorites      Favorite[]
+=======
+>>>>>>> 9b84face2455109db5d5370e07604bfa67e0e0f5
 
   @@index([createdAt])
   @@index([updatedAt])
