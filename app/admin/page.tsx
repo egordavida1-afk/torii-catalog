@@ -8,7 +8,7 @@ import { categoryLabel, searchWhere, typeLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminHome({ searchParams }: { searchParams: { q?: string; category?: string; sync?: string; updated?: string; syncError?: string; movies?: string; series?: string; anime?: string; settings?: string } }) {
+export default async function AdminHome({ searchParams }: { searchParams: { q?: string; category?: string; sync?: string; updated?: string; syncError?: string; movies?: string; series?: string; anime?: string; settings?: string; tmdbImported?: string; tmdbUpdated?: string; kodikImported?: string; kodikUpdated?: string; kodikAttached?: string } }) {
   const q = searchParams.q?.trim() || "";
   const category = searchParams.category === "movie" || searchParams.category === "series" || searchParams.category === "anime" ? searchParams.category : "";
   const [content, genres, settings] = await Promise.all([
