@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminAnimePage({ params }: { params: { id: string } }) {
   const [anime, genres] = await Promise.all([
-    prisma.anime.findUnique({ where: { id: params.id }, include: { seasons: { include: { episodes: true }, orderBy: { number: "asc" } } } }),
+    prisma.anime.findUnique({ where: { id: params.id }, include: { seasons: { include: { episodes: true }, orderBy: { number: "asc" } }, kodikSources: { orderBy: { updatedAt: "desc" } } } }),
     prisma.genre.findMany({ orderBy: { name: "asc" } }),
   ]);
   if (!anime) notFound();
@@ -32,6 +32,15 @@ export default async function AdminAnimePage({ params }: { params: { id: string 
         </aside>
 
         <div>
+          {anime.kodikSources.length > 0 && (
+            <div className="panel kodik-admin-panel">
+              <div className="panel-head"><div><h2>Kodik</h2><p className="meta">Источники просмотра, озвучки и доступные обновления, полученные автоматически.</p></div><span className="pill">{anime.kodikSources.length} источника</span></div>
+              <div className="kodik-source-list">
+                {anime.kodikSources.slice(0, 20).map((source) => <div key={source.id} className="kodik-source-row"><div><strong>{source.translationTitle || "Kodik"}</strong><div className="meta">{source.translationType === "subtitles" ? "Субтитры" : "Озвучка"}{source.quality ? ` · ${source.quality}` : ""}{source.lastSeason ? ` · сезон ${source.lastSeason}` : ""}{source.lastEpisode ? ` · серия ${source.lastEpisode}` : ""}</div></div><a href={source.link} target="_blank" rel="noreferrer" className="btn btn-secondary">Проверить</a></div>)}
+              </div>
+            </div>
+          )}
+
           <form action={updateAnime.bind(null, anime.id)} className="panel">
             <h2>Основные данные</h2>
             <div className="field-row"><div className="field"><label>Название</label><input name="title" defaultValue={anime.title} required maxLength={120} /></div><div className="field"><label>Раздел</label><select name="category" defaultValue={anime.category}><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option></select></div></div><div className="field-row"><div className="field"><label>Формат</label><select name="type" defaultValue={anime.type}><option value="series">Сериал</option><option value="movie">Фильм</option></select></div><div className="field"><label>Год</label><input name="year" type="number" min={1900} max={2200} defaultValue={anime.year || ""} /></div></div>

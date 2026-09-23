@@ -24,8 +24,13 @@ export default async function AdminHome({ searchParams }: { searchParams: { q?: 
     prisma.siteSettings.findUnique({ where: { id: "global" } }),
   ]);
 
-  const imported = Number(searchParams.sync || 0);
-  const updated = Number(searchParams.updated || 0);
+  const tmdbImported = Number(searchParams.tmdbImported || 0);
+  const tmdbUpdated = Number(searchParams.tmdbUpdated || 0);
+  const kodikImported = Number(searchParams.kodikImported || 0);
+  const kodikUpdated = Number(searchParams.kodikUpdated || 0);
+  const kodikAttached = Number(searchParams.kodikAttached || 0);
+  const tmdbEnabled = Boolean(process.env.TMDB_ACCESS_TOKEN?.trim());
+  const kodikEnabled = process.env.KODIK_AUTO_TOKEN?.trim().toLowerCase() !== "false" || Boolean(process.env.KODIK_API_TOKEN?.trim());
 
   return (
     <>
@@ -34,19 +39,23 @@ export default async function AdminHome({ searchParams }: { searchParams: { q?: 
         <form action={logout}><button className="btn btn-secondary" type="submit">Выйти</button></form>
       </div>
 
-      {searchParams.sync !== undefined && <div className="form-success">Автозагрузка завершена: добавлено {Number.isFinite(imported) ? imported : 0}, обновлено {Number.isFinite(updated) ? updated : 0}. Фильмов: {searchParams.movies || 0}, сериалов: {searchParams.series || 0}, аниме: {searchParams.anime || 0}.</div>}
-      {searchParams.syncError && <div className="form-error">Автозагрузка не выполнилась. Проверь `TMDB_ACCESS_TOKEN` и логи deployment.</div>}
+      {searchParams.sync !== undefined && <div className="form-success">Синхронизация завершена. TMDB: добавлено {Number.isFinite(tmdbImported) ? tmdbImported : 0}, обновлено {Number.isFinite(tmdbUpdated) ? tmdbUpdated : 0}. Kodik: новых тайтлов {Number.isFinite(kodikImported) ? kodikImported : 0}, обновлено {Number.isFinite(kodikUpdated) ? kodikUpdated : 0}, подключено к существующим {Number.isFinite(kodikAttached) ? kodikAttached : 0}. Проверено: фильмов {searchParams.movies || 0}, сериалов {searchParams.series || 0}, аниме {searchParams.anime || 0}.</div>}
+      {searchParams.syncError && <div className="form-error">Часть синхронизации завершилась с ошибкой. Открой подробности в логах или проверь ключи TMDB/Kodik.</div>}
       {searchParams.settings !== undefined && <div className="form-success">Настройки оформления сохранены.</div>}
 
       <div className="panel auto-import-panel">
         <div className="panel-head">
           <div>
             <h2>Автозагрузка каталога</h2>
-            <p className="meta">TMDB может автоматически подгружать свежие фильмы, сериалы и японскую анимацию. Видео не импортируется: ссылку на просмотр ты добавляешь отдельно.</p>
+            <p className="meta">TMDB и Kodik работают вместе: TMDB даёт метаданные, Kodik — доступные материалы, озвучки и ссылки на плеер. Если тайтла нет в TMDB, Kodik всё равно создаёт его в каталоге.</p>
           </div>
-          <form action={syncCatalogNow}><button className="btn" type="submit" disabled={!process.env.TMDB_ACCESS_TOKEN}>Обновить сейчас</button></form>
+          <form action={syncCatalogNow}><button className="btn" type="submit" disabled={!tmdbEnabled && !kodikEnabled}>Обновить каталог</button></form>
         </div>
-        {!process.env.TMDB_ACCESS_TOKEN && <p className="tmdb-hint">Добавь на сервере переменную <strong>TMDB_ACCESS_TOKEN</strong> — это API Read Access Token из настроек TMDB.</p>}
+        <div className="sync-status-grid">
+          <div className={`sync-status ${tmdbEnabled ? "is-on" : ""}`}><strong>TMDB</strong><span>{tmdbEnabled ? "подключён" : "не подключён"}</span></div>
+          <div className={`sync-status ${kodikEnabled ? "is-on" : ""}`}><strong>Kodik</strong><span>{kodikEnabled ? "автотокен включён" : "не подключён"}</span></div>
+        </div>
+        {!tmdbEnabled && !kodikEnabled && <p className="tmdb-hint">Включи автоматический поиск токена Kodik или добавь TMDB_ACCESS_TOKEN.</p>}
       </div>
 
       <form className="search-panel admin-search" method="get" action="/admin">

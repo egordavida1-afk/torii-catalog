@@ -9,28 +9,37 @@ generator client {
 }
 
 model Anime {
-  id            String   @id @default(cuid())
-  slug          String   @unique
-  title         String
-  description   String?
-  posterUrl     String?
-  backgroundUrl String?
-  year          Int?
-  genres        String?
-  status        String   @default("ongoing") // ongoing | finished | announced
-  type          String   @default("series") // series | movie — формат плеера
-  category      String   @default("series") // movie | series | anime — раздел каталога
-  source        String   @default("manual") // manual | tmdb
-  sourceKey     String?  @unique
-  videoUrl      String?  // используется для фильмов
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  seasons       Season[]
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  title          String
+  originalTitle  String?
+  description    String?
+  posterUrl      String?
+  backgroundUrl  String?
+  year           Int?
+  genres         String?
+  status         String         @default("ongoing") // ongoing | finished | announced
+  type           String         @default("series") // series | movie
+  category       String         @default("series") // movie | series | anime
+  source         String         @default("manual") // manual | tmdb | kodik | tmdb+kodik
+  sourceKey      String?        @unique
+  kinopoiskId    String?
+  imdbId         String?
+  shikimoriId   String?
+  videoUrl       String?
+  kodikUpdatedAt DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  seasons        Season[]
+  kodikSources   KodikSource[]
 
   @@index([createdAt])
   @@index([updatedAt])
   @@index([type])
   @@index([category])
+  @@index([kinopoiskId])
+  @@index([imdbId])
+  @@index([shikimoriId])
 }
 
 model Season {
@@ -88,8 +97,33 @@ model Session {
 model SiteSettings {
   id              String   @id @default("global")
   backgroundUrl   String?
-  defaultAccent  String   @default("#E8A33D")
+  defaultAccent   String   @default("#E8A33D")
   buttonTextColor String   @default("#171208")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model KodikSource {
+  id               String   @id @default(cuid())
+  animeId          String
+  anime            Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  kodikId          String
+  link             String
+  translationId    Int?
+  translationTitle String?
+  translationType  String?
+  quality          String?
+  camrip           Boolean  @default(false)
+  kodikUpdatedAt   DateTime?
+  lastSeason       Int?
+  lastEpisode      Int?
+  episodesCount    Int?
+  seasonsJson      Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([animeId, kodikId])
+  @@index([animeId])
+  @@index([kodikId])
+  @@index([kodikUpdatedAt])
 }

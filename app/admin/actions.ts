@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminAction } from "@/lib/admin-auth";
 import { normalizeHttpUrl } from "@/lib/security";
 import { slugify } from "@/lib/utils";
-import { syncTmdbCatalog } from "@/lib/tmdb";
+import { syncCatalog } from "@/lib/catalog-sync";
 
 const VALID_TYPES = new Set(["series", "movie"]);
 const VALID_CATEGORIES = new Set(["series", "movie", "anime"]);
@@ -246,12 +246,16 @@ export async function updateSiteSettings(formData: FormData) {
 export async function syncCatalogNow() {
   await requireAdminAction();
 
-  let result: Awaited<ReturnType<typeof syncTmdbCatalog>>;
   try {
-    result = await syncTmdbCatalog();
+    const result = await syncCatalog();
+    const tmdbImported = result.tmdb?.imported || 0;
+    const tmdbUpdated = result.tmdb?.updated || 0;
+    const kodikImported = result.kodik?.imported || 0;
+    const kodikUpdated = result.kodik?.updated || 0;
+    const kodikAttached = result.kodik?.attached || 0;
+    const errorFlag = result.errors.length ? "&syncError=1" : "";
+    redirect(`/admin?sync=1&tmdbImported=${tmdbImported}&tmdbUpdated=${tmdbUpdated}&kodikImported=${kodikImported}&kodikUpdated=${kodikUpdated}&kodikAttached=${kodikAttached}&movies=${result.kodik?.movies || result.tmdb?.movies || 0}&series=${result.kodik?.series || result.tmdb?.series || 0}&anime=${result.kodik?.anime || result.tmdb?.anime || 0}${errorFlag}`);
   } catch {
     redirect("/admin?syncError=1");
   }
-
-  redirect(`/admin?sync=${result.imported}&updated=${result.updated}&anime=${result.anime}&movies=${result.movies}&series=${result.series}`);
 }
