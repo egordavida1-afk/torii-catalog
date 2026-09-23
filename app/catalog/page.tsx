@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
 import { categoryLabel, searchWhere, typeLabel } from "@/lib/utils";
-import { logoutUser } from "./auth/actions";
+import { logoutUser } from "../auth/actions";
 
 export const dynamic = "force-dynamic";
 
