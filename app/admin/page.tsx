@@ -8,9 +8,9 @@ import { categoryLabel, searchWhere, typeLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminHome({ searchParams }: { searchParams: { q?: string; category?: string; sync?: string; updated?: string; syncError?: string; movies?: string; series?: string; anime?: string; settings?: string; tmdbImported?: string; tmdbUpdated?: string; kodikImported?: string; kodikUpdated?: string; kodikAttached?: string } }) {
+export default async function AdminHome({ searchParams }: { searchParams: { q?: string; category?: string; sync?: string; updated?: string; syncError?: string; movies?: string; series?: string; anime?: string; cartoons?: string; settings?: string; tmdbImported?: string; tmdbUpdated?: string; kodikImported?: string; kodikUpdated?: string; kodikAttached?: string } }) {
   const q = searchParams.q?.trim() || "";
-  const category = searchParams.category === "movie" || searchParams.category === "series" || searchParams.category === "anime" ? searchParams.category : "";
+  const category = searchParams.category === "movie" || searchParams.category === "series" || searchParams.category === "anime" || searchParams.category === "cartoon" ? searchParams.category : "";
   const [content, genres, settings] = await Promise.all([
     prisma.anime.findMany({
       where: {
@@ -39,7 +39,7 @@ export default async function AdminHome({ searchParams }: { searchParams: { q?: 
         <form action={logout}><button className="btn btn-secondary" type="submit">Выйти</button></form>
       </div>
 
-      {searchParams.sync !== undefined && <div className="form-success">Синхронизация завершена. TMDB: добавлено {Number.isFinite(tmdbImported) ? tmdbImported : 0}, обновлено {Number.isFinite(tmdbUpdated) ? tmdbUpdated : 0}. Kodik: новых тайтлов {Number.isFinite(kodikImported) ? kodikImported : 0}, обновлено {Number.isFinite(kodikUpdated) ? kodikUpdated : 0}, подключено к существующим {Number.isFinite(kodikAttached) ? kodikAttached : 0}. Проверено: фильмов {searchParams.movies || 0}, сериалов {searchParams.series || 0}, аниме {searchParams.anime || 0}.</div>}
+      {searchParams.sync !== undefined && <div className="form-success">Синхронизация завершена. TMDB: добавлено {Number.isFinite(tmdbImported) ? tmdbImported : 0}, обновлено {Number.isFinite(tmdbUpdated) ? tmdbUpdated : 0}. Kodik: новых тайтлов {Number.isFinite(kodikImported) ? kodikImported : 0}, обновлено {Number.isFinite(kodikUpdated) ? kodikUpdated : 0}, подключено к существующим {Number.isFinite(kodikAttached) ? kodikAttached : 0}. Проверено: фильмов {searchParams.movies || 0}, сериалов {searchParams.series || 0}, аниме {searchParams.anime || 0}, мультфильмов {searchParams.cartoons || 0}.</div>}
       {searchParams.syncError && <div className="form-error">Часть синхронизации завершилась с ошибкой. Открой подробности в логах или проверь ключи TMDB/Kodik.</div>}
       {searchParams.settings !== undefined && <div className="form-success">Настройки оформления сохранены.</div>}
 
@@ -61,7 +61,7 @@ export default async function AdminHome({ searchParams }: { searchParams: { q?: 
       <form className="search-panel admin-search" method="get" action="/admin">
         <input name="q" defaultValue={q} placeholder="Поиск по названию..." aria-label="Поиск тайтлов" autoComplete="off" />
         <select name="category" defaultValue={category} aria-label="Раздел">
-          <option value="">Все разделы</option><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option>
+          <option value="">Все разделы</option><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option><option value="cartoon">Мультфильмы</option>
         </select>
         <button className="btn" type="submit">Найти</button>
         {(q || category) && <Link className="btn btn-secondary" href="/admin">Сбросить</Link>}
@@ -107,7 +107,7 @@ export default async function AdminHome({ searchParams }: { searchParams: { q?: 
             <h2>Новый контент</h2>
             <div className="field-row">
               <div className="field"><label>Название</label><input name="title" required maxLength={120} placeholder="Например: Ночной страж" /></div>
-              <div className="field"><label>Раздел</label><select name="category" defaultValue="series"><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option></select></div>
+              <div className="field"><label>Раздел</label><select name="category" defaultValue="series"><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option><option value="cartoon">Мультфильмы</option></select></div>
             </div>
             <div className="field-row">
               <div className="field"><label>Формат</label><select name="type" defaultValue="series"><option value="series">Сериал</option><option value="movie">Фильм</option></select></div>

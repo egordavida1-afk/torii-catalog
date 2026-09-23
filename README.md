@@ -1,4 +1,4 @@
-# Тории — каталог фильмов, сериалов и аниме
+# TORII — каталог фильмов, сериалов и аниме
 
 Next.js 14 (App Router) + Prisma + PostgreSQL. Проект рассчитан на GitHub + Vercel и базу Neon.
 
@@ -176,3 +176,12 @@ Kodik теперь может самостоятельно создавать т
 - Welcome screen is now the homepage; catalog lives at `/catalog` with category-aware new releases and genres.
 - Added account favorites with persistent PostgreSQL storage.
 - Accent color applies to all intended accent UI rather than legacy gold tokens.
+
+
+## v14 public redesign
+Публичная часть получила новый кинематографичный адаптивный интерфейс без боковой панели: верхняя навигация, hero-блок, горизонтальные подборки, новый каталог и обновлённая страница тайтла. Админская часть проекта сохраняется без изменений по структуре.
+
+## v14.3
+- Added a separate «Мультфильмы» category across public navigation, catalog and admin.
+- Category value: `cartoon`.
+- CDNvideoHub sync/player is intentionally not hard-coded until the official partner API contract/access is available.

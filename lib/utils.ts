@@ -68,6 +68,7 @@ export function categoryLabel(category: string) {
     case "movie": return "Фильмы";
     case "series": return "Сериалы";
     case "anime": return "Аниме";
+    case "cartoon": return "Мультфильмы";
     default: return category;
   }
 }

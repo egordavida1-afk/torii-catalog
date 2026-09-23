@@ -10,7 +10,7 @@ const fallbackPoster = "https://placehold.co/300x450/1c1a26/a9a3b5?text=Нет+�
 
 function contentWhere(q?: string, category?: string, genre?: string) {
   return {
-    ...(category === "movie" || category === "series" || category === "anime" ? { category } : {}),
+    ...(category === "movie" || category === "series" || category === "anime" || category === "cartoon" ? { category } : {}),
     ...(genre ? { genres: { contains: genre, mode: "insensitive" as const } } : {}),
     ...searchWhere(q || ""),
   };
@@ -18,7 +18,7 @@ function contentWhere(q?: string, category?: string, genre?: string) {
 
 export default async function HomePage({ searchParams }: { searchParams: { q?: string; category?: string; genre?: string } }) {
   const q = searchParams.q?.trim() || "";
-  const category = searchParams.category === "movie" || searchParams.category === "series" || searchParams.category === "anime" ? searchParams.category : "";
+  const category = searchParams.category === "movie" || searchParams.category === "series" || searchParams.category === "anime" || searchParams.category === "cartoon" ? searchParams.category : "";
   const genre = searchParams.genre?.trim() || "";
   const user = await getCurrentUser();
 
@@ -30,11 +30,12 @@ export default async function HomePage({ searchParams }: { searchParams: { q?: s
 
   const hasSearchFilters = Boolean(q || genre);
   const hasFilters = Boolean(q || category || genre);
-  const categoryTitle = category === "movie" ? "Фильмы" : category === "series" ? "Сериалы" : category === "anime" ? "Аниме" : "Каталог";
+  const categoryTitle = category === "movie" ? "Фильмы" : category === "series" ? "Сериалы" : category === "anime" ? "Аниме" : category === "cartoon" ? "Мультфильмы" : "Каталог";
   const newReleases = results.slice(0, 10);
   const movies = results.filter((a) => a.category === "movie").slice(0, 10);
   const series = results.filter((a) => a.category === "series").slice(0, 10);
   const anime = results.filter((a) => a.category === "anime").slice(0, 10);
+  const cartoons = results.filter((a) => a.category === "cartoon").slice(0, 10);
   const genreSections = genres.map((g) => ({
     ...g,
     items: results.filter((a) => a.genres?.split(",").map((x) => x.trim().toLowerCase()).includes(g.name.toLowerCase())).slice(0, 6),
@@ -52,7 +53,7 @@ export default async function HomePage({ searchParams }: { searchParams: { q?: s
       <form className="search-panel" method="get" action="/catalog">
         <input name="q" defaultValue={q} placeholder="Поиск по названию..." aria-label="Поиск по названию" autoComplete="off" />
         <select name="category" defaultValue={category} aria-label="Раздел">
-          <option value="">Все разделы</option><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option>
+          <option value="">Все разделы</option><option value="movie">Фильмы</option><option value="series">Сериалы</option><option value="anime">Аниме</option><option value="cartoon">Мультфильмы</option>
         </select>
         <select name="genre" defaultValue={genre} aria-label="Жанр">
           <option value="">Все жанры</option>
@@ -82,8 +83,9 @@ export default async function HomePage({ searchParams }: { searchParams: { q?: s
           <CatalogSection title="Фильмы" items={movies} empty="Фильмов пока нет." category="movie" />
           <CatalogSection title="Сериалы" items={series} empty="Сериалов пока нет." category="series" />
           <CatalogSection title="Аниме" items={anime} empty="Аниме пока нет." category="anime" />
+          <CatalogSection title="Мультфильмы" items={cartoons} empty="Мультфильмов пока нет." category="cartoon" />
           {genreSections.map((section) => <CatalogSection key={section.id} title={`Жанр: ${section.name}`} items={section.items} genre={section.name} />)}
-          {!newReleases.length && !movies.length && !series.length && !anime.length && <div className="empty-state">Каталог пока пуст. Добавь тайтл через админку или запусти автозагрузку.</div>}
+          {!newReleases.length && !movies.length && !series.length && !anime.length && !cartoons.length && <div className="empty-state">Каталог пока пуст. Добавь тайтл через админку или запусти автозагрузку.</div>}
         </>
       )}
     </>

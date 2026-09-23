@@ -66,6 +66,7 @@ export type KodikSyncResult = {
   movies: number;
   series: number;
   anime: number;
+  cartoons: number;
   translations: number;
   episodes: number;
 };
@@ -237,7 +238,7 @@ async function findExisting(result: KodikResult) {
   return hit ? prisma.anime.findUnique({ where: { id: hit.id } }) : null;
 }
 
-function mapCategory(type: string | undefined): { category: "movie" | "series" | "anime"; contentType: "movie" | "series" } | null {
+function mapCategory(type: string | undefined): { category: "movie" | "series" | "anime" | "cartoon"; contentType: "movie" | "series" } | null {
   switch (type) {
     case "anime":
       return { category: "anime", contentType: "movie" };
@@ -245,16 +246,18 @@ function mapCategory(type: string | undefined): { category: "movie" | "series" |
       return { category: "anime", contentType: "series" };
     case "foreign-serial":
     case "russian-serial":
-    case "cartoon-serial":
     case "documentary-serial":
       return { category: "series", contentType: "series" };
+    case "cartoon-serial":
+      return { category: "cartoon", contentType: "series" };
     case "foreign-movie":
     case "russian-movie":
     case "multi-part-film":
+      return { category: "movie", contentType: "movie" };
     case "foreign-cartoon":
     case "russian-cartoon":
     case "soviet-cartoon":
-      return { category: "movie", contentType: "movie" };
+      return { category: "cartoon", contentType: "movie" };
     default:
       return null;
   }
@@ -415,11 +418,34 @@ async function fetchRecent(types: string, limit = 24) {
   return response.results || [];
 }
 
+async function fetchAllPages(types: string, maxPages: number) {
+  const results: KodikResult[] = [];
+  let nextPage: string | null = null;
+  let page = 0;
+  do {
+    const response = await kodikPost<KodikResponse>(nextPage || "/list", nextPage ? {} : {
+      limit: 100,
+      types,
+      sort: "updated_at",
+      order: "desc",
+      with_material_data: true,
+      with_episodes_data: true,
+    });
+    results.push(...(response.results || []));
+    nextPage = response.next_page || null;
+    page += 1;
+  } while (nextPage && page < maxPages);
+  return results;
+}
+
 export async function syncKodikCatalog(): Promise<KodikSyncResult> {
+  const animeMaxPages = Math.max(1, Number(process.env.KODIK_ANIME_MAX_PAGES || 50));
+  // Для аниме читаем несколько страниц, чтобы старые тайтлы не зависели от updated_at.
+  // Фильмы/сериалы пока оставляем на свежей выборке: позже их переведём на CDNvideoHub.
   const [movies, series, anime] = await Promise.all([
     fetchRecent("foreign-movie,russian-movie,multi-part-film,foreign-cartoon,russian-cartoon,soviet-cartoon"),
     fetchRecent("foreign-serial,russian-serial,cartoon-serial,documentary-serial"),
-    fetchRecent("anime,anime-serial"),
+    fetchAllPages("anime,anime-serial", animeMaxPages),
   ]);
 
   const all = [...movies, ...series, ...anime];
@@ -447,6 +473,7 @@ export async function syncKodikCatalog(): Promise<KodikSyncResult> {
     movies: all.filter((x) => mapCategory(x.type)?.category === "movie").length,
     series: all.filter((x) => mapCategory(x.type)?.category === "series").length,
     anime: all.filter((x) => mapCategory(x.type)?.category === "anime").length,
+    cartoons: all.filter((x) => mapCategory(x.type)?.category === "cartoon").length,
     translations,
     episodes,
   };

@@ -9,7 +9,7 @@ import { slugify } from "@/lib/utils";
 import { syncCatalog } from "@/lib/catalog-sync";
 
 const VALID_TYPES = new Set(["series", "movie"]);
-const VALID_CATEGORIES = new Set(["series", "movie", "anime"]);
+const VALID_CATEGORIES = new Set(["series", "movie", "anime", "cartoon"]);
 const VALID_STATUSES = new Set(["ongoing", "finished", "announced"]);
 
 function cleanText(value: FormDataEntryValue | null, max = 5000) {
@@ -48,7 +48,7 @@ export async function createAnime(formData: FormData) {
   const category = cleanText(formData.get("category"), 20);
   if (!VALID_CATEGORIES.has(category)) throw new Error("Некорректный раздел каталога");
   if ((category === "movie" && type !== "movie") || (category === "series" && type !== "series")) {
-    throw new Error("Для разделов «Фильмы» и «Сериалы» формат должен совпадать с разделом. Для «Аниме» доступен фильм или сериал.");
+    throw new Error("Для разделов «Фильмы» и «Сериалы» формат должен совпадать с разделом. Для «Аниме» и «Мультфильмов» доступен фильм или сериал.");
   }
 
   const status = cleanText(formData.get("status"), 20);
@@ -93,7 +93,7 @@ export async function updateAnime(animeId: string, formData: FormData) {
   const category = cleanText(formData.get("category"), 20);
   if (!VALID_CATEGORIES.has(category)) throw new Error("Некорректный раздел каталога");
   if ((category === "movie" && type !== "movie") || (category === "series" && type !== "series")) {
-    throw new Error("Для разделов «Фильмы» и «Сериалы» формат должен совпадать с разделом. Для «Аниме» доступен фильм или сериал.");
+    throw new Error("Для разделов «Фильмы» и «Сериалы» формат должен совпадать с разделом. Для «Аниме» и «Мультфильмов» доступен фильм или сериал.");
   }
   const status = cleanText(formData.get("status"), 20);
   if (!VALID_STATUSES.has(status)) throw new Error("Некорректный статус");
@@ -254,7 +254,7 @@ export async function syncCatalogNow() {
     const kodikUpdated = result.kodik?.updated || 0;
     const kodikAttached = result.kodik?.attached || 0;
     const errorFlag = result.errors.length ? "&syncError=1" : "";
-    redirect(`/admin?sync=1&tmdbImported=${tmdbImported}&tmdbUpdated=${tmdbUpdated}&kodikImported=${kodikImported}&kodikUpdated=${kodikUpdated}&kodikAttached=${kodikAttached}&movies=${result.kodik?.movies || result.tmdb?.movies || 0}&series=${result.kodik?.series || result.tmdb?.series || 0}&anime=${result.kodik?.anime || result.tmdb?.anime || 0}${errorFlag}`);
+    redirect(`/admin?sync=1&tmdbImported=${tmdbImported}&tmdbUpdated=${tmdbUpdated}&kodikImported=${kodikImported}&kodikUpdated=${kodikUpdated}&kodikAttached=${kodikAttached}&movies=${result.kodik?.movies || result.tmdb?.movies || 0}&series=${result.kodik?.series || result.tmdb?.series || 0}&anime=${result.kodik?.anime || result.tmdb?.anime || 0}&cartoons=${result.kodik?.cartoons || 0}${errorFlag}`);
   } catch {
     redirect("/admin?syncError=1");
   }

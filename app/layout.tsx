@@ -10,8 +10,8 @@ const display = Unbounded({ subsets: ["latin", "cyrillic"], weight: ["500", "700
 const body = Manrope({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "700"], variable: "--font-body" });
 
 export const metadata: Metadata = {
-  title: "Тории — каталог фильмов, сериалов и аниме",
-  description: "Каталог фильмов, сериалов и аниме с новинками, жанрами, поиском и просмотром для зарегистрированных пользователей.",
+  title: "TORII — фильмы, сериалы, аниме и мультфильмы",
+  description: "TORII — фильмы, сериалы, аниме и мультфильмы в одном месте.",
 };
 
 export const dynamic = "force-dynamic";
@@ -22,29 +22,53 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     getCurrentUser(),
   ]);
   const background = settings?.backgroundUrl || "/bg-collage.svg";
-  const accent = settings?.defaultAccent || "#E8A33D";
-  const buttonText = settings?.buttonTextColor || "#171208";
+  const accent = settings?.defaultAccent || "#8b5cf6";
+  const buttonText = settings?.buttonTextColor || "#ffffff";
+  const avatarLetter = user?.email?.slice(0, 1).toUpperCase() || "Т";
+
   return (
     <html lang="ru">
       <body className={`${display.variable} ${body.variable}`} style={{ "--accent": accent, "--accent-ink": buttonText } as React.CSSProperties}>
         <div className="bg-collage" aria-hidden="true" style={{ backgroundImage: `url("${background}")` }} />
         <div className="site-frame">
           <header className="site-header">
-            <Link href="/" className="brand"><span className="brand-mark">鳥</span><span className="brand-name">Тории</span></Link>
-            <nav className="site-nav" aria-label="Навигация">
-              <Link href="/catalog">Каталог</Link>
+            <Link href="/" className="brand" aria-label="Torii — главная">
+              <span className="brand-logo"><img src="/torii-mark.svg" alt="" aria-hidden="true" /></span>
+              <span className="brand-name">TORII</span>
+            </Link>
+
+            <nav className="site-nav" aria-label="Основная навигация">
+              <Link href="/">Главная</Link>
+              <Link href="/catalog?category=movie">Фильмы</Link>
+              <Link href="/catalog?category=series">Сериалы</Link>
+              <Link href="/catalog?category=anime">Аниме</Link>
+              <Link href="/catalog?category=cartoon">Мультфильмы</Link>
+            </nav>
+
+            <div className="header-actions">
+              <Link href="/catalog" className="header-search" aria-label="Поиск" title="Поиск">
+                <span aria-hidden="true">⌕</span>
+                <span className="header-search-text">Поиск</span>
+              </Link>
+              <Link href="/favorites" className="header-icon" aria-label="Избранное" title="Избранное">♡</Link>
               {user ? (
                 <>
-                  <Link href="/favorites">Избранное</Link>
-                  <form action={logoutUser} className="nav-form"><button className="nav-link-button" type="submit">Выйти</button></form>
+                  <span className="header-avatar" aria-label={`Пользователь ${user.email}`} title={user.email}>{avatarLetter}</span>
+                  <form action={logoutUser} className="nav-form">
+                    <button className="header-logout" type="submit">Выйти</button>
+                  </form>
                 </>
-              ) : <Link href="/login">Войти</Link>}
-            </nav>
+              ) : (
+                <Link href="/login" className="header-login">Войти</Link>
+              )}
+            </div>
           </header>
+
           <main>{children}</main>
+
           <footer className="site-footer">
-            <span>Каталог фильмов, сериалов и аниме.</span>
-            <Link className="tmdb-credit" href="/credits">Источники и TMDB</Link>
+            <span>TORII · фильмы, сериалы, аниме и мультфильмы.</span>
+            <Link className="tmdb-credit" href="/credits">Источники</Link>
           </footer>
         </div>
       </body>
