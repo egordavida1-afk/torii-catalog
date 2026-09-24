@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/user-auth";
+import { getCurrentUser } from "@/lib/user-auth";
 import WatchVideo from "@/app/components_WatchVideo";
 import CinemaMode from "@/app/components_CinemaMode";
 import EpisodeStartTracker from "@/app/components_EpisodeStartTracker";
@@ -12,10 +13,77 @@ import { categoryLabel, normalizeVideoUrl, statusLabel, typeLabel } from "@/lib/
 import { toggleFavorite } from "@/app/favorites/actions";
 
 export const dynamic = "force-dynamic";
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const anime = await prisma.anime.findUnique({
+    where: { slug: params.slug },
+    select: {
+      title: true,
+      description: true,
+      posterUrl: true,
+      type: true,
+    },
+  });
+
+  if (!anime) {
+    return {
+      title: "Страница не найдена | TORII",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    "https://torii-catalog.vercel.app";
+
+  const canonical = `${siteUrl}/anime/${params.slug}`;
+  const description =
+    anime.description?.trim() ||
+    `${anime.title} — смотреть онлайн на TORII. Фильмы, сериалы, аниме и мультфильмы.`;
+
+  return {
+    title: anime.title,
+    description,
+    alternates: {
+      canonical,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+    openGraph: {
+      title: anime.title,
+      description,
+      url: canonical,
+      siteName: "TORII",
+      type: anime.type === "movie" ? "video.movie" : "video.tv_show",
+      images: anime.posterUrl
+        ? [
+            {
+              url: anime.posterUrl,
+              alt: anime.title,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: anime.title,
+      description,
+      images: anime.posterUrl ? [anime.posterUrl] : undefined,
+    },
+  };
+}
 
 export default async function AnimePage({ params, searchParams }: { params: { slug: string }; searchParams: { season?: string; ep?: string; kodik?: string } }) {
-  const user = await requireUser();
-  if (!user) redirect(`/login?next=${encodeURIComponent(`/anime/${params.slug}`)}`);
+  const user = await getCurrentUser();
+
 
   const anime = await prisma.anime.findUnique({
     where: { slug: params.slug },
@@ -26,22 +94,38 @@ export default async function AnimePage({ params, searchParams }: { params: { sl
   });
   if (!anime) notFound();
 
-  const [favorite, watchRows] = await Promise.all([
-    prisma.favorite.findUnique({
-      where: { userId_animeId: { userId: user.id, animeId: anime.id } },
-      select: { id: true },
-    }),
-    prisma.watchProgress.findMany({
-      where: { userId: user.id, animeId: anime.id },
-      orderBy: { updatedAt: "desc" },
-    }),
-  ]);
+  const [favorite, watchRows] = user
+    ? await Promise.all([
+        prisma.favorite.findUnique({
+          where: { userId_animeId: { userId: user.id, animeId: anime.id } },
+          select: { id: true },
+        }),
+        prisma.watchProgress.findMany({
+          where: { userId: user.id, animeId: anime.id },
+          orderBy: { updatedAt: "desc" },
+        }),
+      ])
+    : [null, []];
 
   const parserFallback: AnimeParserFallback | null =
     !anime.posterUrl || anime.kodikSources.length === 0
       ? await resolveAnimeWithParsers(anime.title, 1, Number(searchParams.ep) || 1)
       : null;
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    "https://torii-catalog.vercel.app";
+
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": anime.type === "movie" ? "Movie" : "TVSeries",
+    name: anime.title,
+    description:
+      anime.description?.trim() ||
+      `${anime.title} — смотреть онлайн на TORII.`,
+    image: anime.posterUrl ? [anime.posterUrl] : undefined,
+    url: `${siteUrl}/anime/${anime.slug}`,
+  };
   const genres = anime.genres ? anime.genres.split(",").map((g) => g.trim()).filter(Boolean) : (parserFallback?.genres || []);
   const seasons = anime.seasons.map((s) => ({ ...s, episodes: [...s.episodes].sort((a, b) => a.number - b.number) }));
   const latestProgress = watchRows.find((row) => !row.completed) ?? null;
@@ -79,6 +163,7 @@ export default async function AnimePage({ params, searchParams }: { params: { sl
   const shouldUseKodik = !hasLocalPlayback && Boolean(selectedSource);
   const shouldUseParserFallback = !hasLocalPlayback && !shouldUseKodik && Boolean(parserSource);
   const movieVideo = anime.type === "movie" ? (anime.videoUrl || (selectedSource?.link ?? null)) : null;
+
 
   return (
     <div className="title-page" style={anime.backgroundUrl ? { backgroundImage: `linear-gradient(90deg, rgba(18,17,26,.98) 0%, rgba(18,17,26,.84) 42%, rgba(18,17,26,.50) 100%), url(${JSON.stringify(anime.backgroundUrl)})` } : undefined}>
@@ -158,6 +243,7 @@ function LocalPlayback({ anime, seasons, searchParams, progressRows }: { anime: 
   if (!activeEpisode) return <div className="empty-state">В этом сезоне пока нет серий.</div>;
   const progress = progressRows.find((row) => row.seasonNumber === activeSeason.number && row.episodeNumber === activeEpisode.number);
 
+
   return (
     <>
       {seasons.length > 1 && <div className="season-tabs">{seasons.map((s) => <Link key={s.id} href={`/anime/${anime.slug}?season=${s.number}`} className={s.id === activeSeason?.id ? "active" : ""}>{s.title || `Сезон ${s.number}`}</Link>)}</div>}
@@ -165,7 +251,8 @@ function LocalPlayback({ anime, seasons, searchParams, progressRows }: { anime: 
       <div className="episode-list">
         {activeSeason.episodes.map((ep: any) => {
           const watched = progressRows.some((row) => row.seasonNumber === activeSeason.number && row.episodeNumber === ep.number && row.completed);
-          return (
+
+  return (
             <div key={ep.id} className={`episode-row ${ep.id === activeEpisode.id ? "active" : ""} ${watched ? "is-watched" : ""}`}>
               <Link href={`/anime/${anime.slug}?season=${activeSeason.number}&ep=${ep.number}`} className="episode-main">
                 <span className="num">{watched ? "✓" : String(ep.number).padStart(2, "0")}</span>
@@ -186,6 +273,7 @@ function ParserFallbackPlayback({ animeId, source, seasonNumber, episodeNumber, 
   const url = streamMp4 || source.embed || source.stream?.HLS || source.stream?.DASH || null;
   if (!url) return <div className="empty-state">Источник найден, но ссылка на воспроизведение недоступна.</div>;
   const { type, src } = normalizeVideoUrl(url);
+
   return (
     <>
       <div className="panel playback-source-panel">
@@ -204,6 +292,7 @@ function ParserFallbackPlayback({ animeId, source, seasonNumber, episodeNumber, 
 
 function KodikPlayback({ animeId, source, seasons, activeSeason, activeEpisode, hasEpisodes, watchedKeys, progressRows }: { animeId: string; source: any; seasons: ReturnType<typeof kodikSeasons>; activeSeason?: ReturnType<typeof kodikSeasons>[number]; activeEpisode?: ReturnType<typeof kodikSeasons>[number]["episodes"][number]; hasEpisodes: boolean; watchedKeys: Set<string>; progressRows: any[] }) {
   const playerUrl = activeEpisode?.link || activeSeason?.link || source.link;
+
   return (
     <>
       {activeEpisode && <EpisodeStartTracker animeId={animeId} seasonNumber={activeSeason?.number ?? 0} episodeNumber={activeEpisode.number} />}
@@ -213,7 +302,8 @@ function KodikPlayback({ animeId, source, seasons, activeSeason, activeEpisode, 
         <div className="episode-list">
           {activeSeason.episodes.map((ep) => {
             const watched = watchedKeys.has(`${activeSeason.number}:${ep.number}`);
-            return (
+
+  return (
               <div key={ep.number} className={`episode-row ${ep.number === activeEpisode?.number ? "active" : ""} ${watched ? "is-watched" : ""}`}>
                 <Link href={`?kodik=${encodeURIComponent(source.id)}&season=${activeSeason.number}&ep=${ep.number}`} className="episode-main">
                   <span className="num">{watched ? "✓" : String(ep.number).padStart(2, "0")}</span>
