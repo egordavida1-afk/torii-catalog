@@ -1,0 +1,71 @@
+warning: in the working copy of '.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.github/workflows/ci.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.nvmrc', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'CHANGELOG-v14.4.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/AppearanceForm.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/ConfirmButton.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/actions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/anime/[id]/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/login/actions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/login/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/cron/catalog-sync/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/auth/actions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/catalog/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/components_EpisodeStartTracker.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/components_HeroCarousel.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/components_WatchVideo.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/credits/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/favorites/actions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/favorites/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/globals.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/icon.svg', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/login/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/not-found.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/register/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/watch/actions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/admin-auth.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/auth.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/catalog-sync.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/kodik.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/prisma.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/rate-limit.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/security.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/user-auth.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/utils.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'middleware.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'next-env.d.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'next.config.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/migrations/20260922_init/migration.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/migrations/202609230001_catalog_upgrade/migration.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/migrations/202609230002_site_settings/migration.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/migrations/202609230003_kodik_integration/migration.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/migrations/202609230005_favorites/migration.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/migrations/202609240001_watch_progress/migration.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/schema.prisma', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/seed.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/bg-collage.svg', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/torii-mark.svg', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tsconfig.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'vercel.json', LF will be replaced by CRLF the next time Git touches it
+ .env.example                    |    5 [32m+[m[31m-[m
+ README.md                       |  195 [32m++[m[31m----[m
+ app/admin/actions.ts            |    6 [32m+[m[31m-[m
+ app/admin/page.tsx              |   16 [32m+[m[31m-[m
+ app/anime/[slug]/page.tsx       |   74 [32m++[m[31m-[m
+ app/components_HeroCarousel.tsx |    3 [31m-[m
+ app/credits/page.tsx            |    6 [32m+[m[31m-[m
+ app/globals.css                 |  142 [32m+++[m[31m-[m
+ app/layout.tsx                  |    2 [32m+[m[31m-[m
+ app/page.tsx                    |  233 [32m++++++[m[31m-[m
+ lib/catalog-sync.ts             |   76 [32m++[m[31m-[m
+ lib/kodik.ts                    | 1376 [32m++++++++++++++++++++++++++++++++[m[31m-------[m
+ prisma/schema.prisma            |   73 [32m+[m[31m--[m
+ vercel.json                     |    4 [32m+[m[31m-[m
+ 14 files changed, 1683 insertions(+), 528 deletions(-)

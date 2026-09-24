@@ -1,0 +1,1 @@
+anime-parsers-ru==1.18.0

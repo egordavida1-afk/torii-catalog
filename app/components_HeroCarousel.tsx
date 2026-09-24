@@ -78,9 +78,6 @@ export default function HeroCarousel({ items }: { items: HeroItem[] }) {
         <div className="hero-actions">
           <Link href={`/anime/${item.slug}`} className="hero-button hero-button-glow">▶ Смотреть</Link>
           <Link href={`/anime/${item.slug}`} className="hero-button ghost">♡ В избранное</Link>
-          {safeItems.length > 1 && (
-            <button type="button" className="hero-button ghost surprise-button" onClick={() => setActive(Math.floor(Math.random() * safeItems.length))}>✦ Удиви меня</button>
-          )}
         </div>
       </div>
 

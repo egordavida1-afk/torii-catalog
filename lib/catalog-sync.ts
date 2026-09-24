@@ -1,43 +1,73 @@
-import { syncKodikCatalog, type KodikSyncResult } from "@/lib/kodik";
-import { syncTmdbCatalog } from "@/lib/tmdb";
+import {
+  syncKodikCatalog,
+  type KodikSyncResult,
+} from "@/lib/kodik";
+
+import {
+  syncAniLibertyCatalog,
+  type AniLibertySyncResult,
+} from "@/lib/aniliberty-sync";
 
 export type CatalogSyncResult = {
-  tmdb: Awaited<ReturnType<typeof syncTmdbCatalog>> | null;
+  aniliberty: AniLibertySyncResult | null;
   kodik: KodikSyncResult | null;
   errors: string[];
 };
 
 export async function syncCatalog(): Promise<CatalogSyncResult> {
-  const tmdbEnabled = Boolean(process.env.TMDB_ACCESS_TOKEN?.trim());
-  // Kodik can resolve a public token automatically; an explicit KODIK_API_TOKEN remains an optional override.
-  const kodikEnabled = process.env.KODIK_AUTO_TOKEN?.trim().toLowerCase() !== "false" || Boolean(process.env.KODIK_API_TOKEN?.trim());
-  if (!tmdbEnabled && !kodikEnabled) {
-    throw new Error("TMDB отключён, а автоматический поиск токена Kodik отключён.");
-  }
-
   const errors: string[] = [];
-  let tmdb: CatalogSyncResult["tmdb"] = null;
+
+  let aniliberty: CatalogSyncResult["aniliberty"] = null;
   let kodik: CatalogSyncResult["kodik"] = null;
 
-  // Сначала обновляем TMDB-метаданные, если ключ есть. Это помогает Kodik-синхронизации
-  // сопоставлять уже существующие карточки по оригинальному названию и году.
-  if (tmdbEnabled) {
-    try {
-      tmdb = await syncTmdbCatalog();
-    } catch (error) {
-      errors.push(`TMDB: ${error instanceof Error ? error.message : "Ошибка TMDB"}`);
-    }
+  /*
+   * AniLiberty — основной источник каталога.
+   */
+  try {
+    aniliberty = await syncAniLibertyCatalog();
+  } catch (error) {
+    errors.push(
+      `AniLiberty: ${
+        error instanceof Error
+          ? error.message
+          : "Ошибка AniLiberty"
+      }`
+    );
   }
 
-  // Kodik работает независимо. Даже при ошибке/отсутствии TMDB его новые тайтлы
-  // всё равно импортируются как самостоятельный источник каталога.
+  /*
+   * Kodik — отдельный источник видео.
+   * Ошибка Kodik не должна ломать обновление каталога AniLiberty.
+   */
+  const kodikEnabled =
+    process.env.KODIK_AUTO_TOKEN
+      ?.trim()
+      .toLowerCase() !== "false" ||
+    Boolean(
+      process.env.KODIK_API_TOKEN?.trim()
+    );
+
   if (kodikEnabled) {
     try {
       kodik = await syncKodikCatalog();
     } catch (error) {
-      errors.push(`Kodik: ${error instanceof Error ? error.message : "Ошибка Kodik"}`);
+      errors.push(
+        `Kodik: ${
+          error instanceof Error
+            ? error.message
+            : "Ошибка Kodik"
+        }`
+      );
     }
+  } else {
+    errors.push(
+      "Kodik отключён: KODIK_AUTO_TOKEN=false и KODIK_API_TOKEN не задан."
+    );
   }
 
-  return { tmdb, kodik, errors };
+  return {
+    aniliberty,
+    kodik,
+    errors,
+  };
 }

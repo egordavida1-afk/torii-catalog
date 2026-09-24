@@ -120,7 +120,7 @@ export async function updateAnime(animeId: string, formData: FormData) {
       status,
       type,
       category,
-      source: existing.source === "tmdb" ? "manual" : existing.source,
+      source: existing.source === "manual" ? "manual" : "kodik",
       videoUrl,
     },
   });
@@ -248,13 +248,11 @@ export async function syncCatalogNow() {
 
   try {
     const result = await syncCatalog();
-    const tmdbImported = result.tmdb?.imported || 0;
-    const tmdbUpdated = result.tmdb?.updated || 0;
     const kodikImported = result.kodik?.imported || 0;
     const kodikUpdated = result.kodik?.updated || 0;
     const kodikAttached = result.kodik?.attached || 0;
     const errorFlag = result.errors.length ? "&syncError=1" : "";
-    redirect(`/admin?sync=1&tmdbImported=${tmdbImported}&tmdbUpdated=${tmdbUpdated}&kodikImported=${kodikImported}&kodikUpdated=${kodikUpdated}&kodikAttached=${kodikAttached}&movies=${result.kodik?.movies || result.tmdb?.movies || 0}&series=${result.kodik?.series || result.tmdb?.series || 0}&anime=${result.kodik?.anime || result.tmdb?.anime || 0}&cartoons=${result.kodik?.cartoons || 0}${errorFlag}`);
+    redirect(`/admin?sync=1&kodikImported=${kodikImported}&kodikUpdated=${kodikUpdated}&kodikAttached=${kodikAttached}&movies=${result.kodik?.movies || 0}&series=${result.kodik?.series || 0}&anime=${result.kodik?.anime || 0}&cartoons=${result.kodik?.cartoons || 0}${errorFlag}`);
   } catch {
     redirect("/admin?syncError=1");
   }

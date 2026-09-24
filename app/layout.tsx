@@ -68,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
           <footer className="site-footer">
             <span>TORII · фильмы, сериалы, аниме и мультфильмы.</span>
-            <Link className="tmdb-credit" href="/credits">Источники</Link>
+            <Link className="source-link" href="/credits">Источники</Link>
           </footer>
         </div>
       </body>

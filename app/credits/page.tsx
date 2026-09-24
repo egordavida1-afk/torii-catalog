@@ -8,9 +8,9 @@ export default function CreditsPage() {
         <p>Информация об автоматических данных каталога.</p>
       </div>
       <div className="panel">
-        <h2>TMDB</h2>
-        <p className="title-desc">Этот продукт использует TMDB API, но не одобрен и не сертифицирован TMDB.</p>
-        <p className="title-desc"><a className="tmdb-credit" href="https://www.themoviedb.org" target="_blank" rel="noreferrer">The Movie Database (TMDB)</a></p>
+        <h2>Kodik</h2>
+        <p className="title-desc">Каталог аниме и данные плеера загружаются через подключённую интеграцию Kodik.</p>
+        <p className="title-desc">Используемые API и плеер должны соответствовать условиям предоставившего их сервиса.</p>
       </div>
       <p className="auth-note"><Link href="/catalog">← В каталог</Link></p>
     </div>

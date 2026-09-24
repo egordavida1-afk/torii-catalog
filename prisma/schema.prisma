@@ -1,39 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model Anime {
-  id             String         @id @default(cuid())
-  slug           String         @unique
+  id             String          @id @default(cuid())
+  slug           String          @unique
   title          String
-  originalTitle  String?
   description    String?
   posterUrl      String?
   backgroundUrl  String?
   year           Int?
   genres         String?
-  status         String         @default("ongoing") // ongoing | finished | announced
-  type           String         @default("series") // series | movie
-  category       String         @default("series") // movie | series | anime | cartoon
-  source         String         @default("manual") // manual | tmdb | kodik | tmdb+kodik
-  sourceKey      String?        @unique
+  status         String          @default("ongoing")
+  type           String          @default("series")
+  videoUrl       String?
+  createdAt      DateTime        @default(now())
+  category       String          @default("series")
+  source         String          @default("manual")
+  sourceKey      String?         @unique
+  updatedAt      DateTime        @default(now()) @updatedAt
+  originalTitle  String?
   kinopoiskId    String?
   imdbId         String?
-  shikimoriId   String?
-  videoUrl       String?
+  shikimoriId    String?
   kodikUpdatedAt DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  seasons        Season[]
-  kodikSources   KodikSource[]
   favorites      Favorite[]
-  watchProgress   WatchProgress[]
+  kodikSources   KodikSource[]
+  seasons        Season[]
+  watchProgress  WatchProgress[]
 
   @@index([createdAt])
   @@index([updatedAt])
@@ -49,21 +49,21 @@ model Season {
   number   Int
   title    String?
   animeId  String
-  anime    Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade)
   episodes Episode[]
+  anime    Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade)
 
   @@unique([animeId, number])
 }
 
 model Episode {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   number      Int
   title       String?
   videoUrl    String
   duration    Int?
   releaseDate DateTime?
   seasonId    String
-  season      Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  season      Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([seasonId, number])
 }
@@ -78,12 +78,12 @@ model Genre {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  createdAt    DateTime  @default(now())
-  sessions     Session[]
-  favorites    Favorite[]
+  id            String          @id @default(cuid())
+  email         String          @unique
+  passwordHash  String
+  createdAt     DateTime        @default(now())
+  favorites     Favorite[]
+  sessions      Session[]
   watchProgress WatchProgress[]
 }
 
@@ -103,14 +103,13 @@ model Favorite {
   userId    String
   animeId   String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, animeId])
   @@index([userId, createdAt])
   @@index([animeId])
 }
-
 
 model WatchProgress {
   id              String   @id @default(cuid())
@@ -123,8 +122,8 @@ model WatchProgress {
   completed       Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   anime           Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, animeId, seasonNumber, episodeNumber])
   @@index([userId, updatedAt])
@@ -132,7 +131,7 @@ model WatchProgress {
 }
 
 model SiteSettings {
-  id              String   @id @default("global")
+  id              String   @id
   backgroundUrl   String?
   defaultAccent   String   @default("#E8A33D")
   buttonTextColor String   @default("#171208")
@@ -141,23 +140,23 @@ model SiteSettings {
 }
 
 model KodikSource {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   animeId          String
-  anime            Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
   kodikId          String
   link             String
   translationId    Int?
   translationTitle String?
   translationType  String?
   quality          String?
-  camrip           Boolean  @default(false)
+  camrip           Boolean   @default(false)
   kodikUpdatedAt   DateTime?
   lastSeason       Int?
   lastEpisode      Int?
   episodesCount    Int?
   seasonsJson      Json?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  anime            Anime     @relation(fields: [animeId], references: [id], onDelete: Cascade)
 
   @@unique([animeId, kodikId])
   @@index([animeId])
